@@ -41,7 +41,7 @@ func main() {
 		"X-Custom-Header": []string{"myvalue"},
 	}
 
-	// POST to the controlm api loging URL with all values set
+	// POST to the controlm api log in URL with all values set
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
