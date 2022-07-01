@@ -29,7 +29,7 @@ func main() {
 	}
 
 	// let's store our credentials in JSON format
-	loginCredentials := strings.NewReader(`{"username": "$USERNAME", "password": "$PASSWORD"}`)
+	loginCredentials := strings.NewReader(`{"username": $USERNAME, "password": $PASSWORD}`)
 
 	// the POST request, controlm api login url & credentials are set to req variable.
 	req, err := http.NewRequest("POST", "https://$HOST:$PORT/automation-api/session/login", loginCredentials)
@@ -48,7 +48,7 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-	// wrap the POST ( JSON response ) into a new variable
+	// wrap the post response ( JSON response ) into a new variable
 	post_response, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -61,10 +61,10 @@ func main() {
 		Version  string
 	}
 
-	// this will hold the json struct values
+	// this new posthold type will hold the json struct values
 	var structValues posthold
 
-	// unmarhsal structValues values
+	// unmarhsal structValues
 	err = json.Unmarshal([]byte(post_response), &structValues)
 	if err != nil {
 		log.Fatal(err)
@@ -77,31 +77,35 @@ func main() {
 	}
 
 	color.Yellow("Getting ControlM log : ")
+
+	// set the url and jobname into a variable
 	url1 := "https://$HOST:$PORT/automation-api/run/jobs/status?jobname=" + os.Args[1]
 
-	// GET url1 with token
+	// set the request as a GET
 	response2, err := http.NewRequest("GET", url1, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// set header for request
 	response2.Header = http.Header{
 		"Content-Type":    []string{"application/json"},
 		"X-Custom-Header": []string{"myvalue"},
 		"Authorization":   []string{"Bearer " + structValues.Token},
 	}
 
-	// GET response2
+	// actually GET the request
 	controlmOutput1, err := client.Do(response2)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer controlmOutput1.Body.Close()
 
-	// place controlmOutput1 output and place it into the jobstate
+	// read controlmOutput1 output and place it into jobstate variable
 	jobstate, err := ioutil.ReadAll(controlmOutput1.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// struct to hold all the JSON values for jobstate. We may need them later
 	type JobStruct struct {
 		Statuses []struct {
@@ -135,12 +139,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// joblogdata contains the controlm Jobid needed to search the controlmlogs
+	// joblogdata contains the controlm Jobid needed to search controlm logs
 	joblogdata := p.Statuses[0].Jobid
 
-	// what if we want the output
+	/*
+
+		get the requested job's output
+
+	*/
 	url3 := "https://$HOST:$PORT/automation-api/run/job/" + joblogdata + "/output"
-	// new GET request using the old token but new url for the logs
 	response4, err := http.NewRequest("GET", url3, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -151,8 +158,7 @@ func main() {
 		"Annotation-Description": []string{"per_dev"},
 		"Authorization":          []string{"Bearer " + structValues.Token},
 	}
-
-	//
+	// peform a GET
 	controlmOutput13, err := client.Do(response4)
 	if err != nil {
 		log.Fatal(err)
@@ -163,8 +169,46 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	color.Cyan("\n\n\nControlM Job Log Output:")
 	fmt.Printf("%s", theLogOutputFromControlm)
-	// log out of controlm
+
+	/*
+
+		get the requested job's log or overall state
+
+	*/
+	url2 := "https://$HOST:$PORT/automation-api/run/job/" + joblogdata + "/log"
+	getlogfromurl2, err := http.NewRequest("GET", url2, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	getlogfromurl2.Header = http.Header{
+
+		"Content-Type":           []string{"application/json"},
+		"Annotation-Subject":     []string{"per_dev"},
+		"Annotation-Description": []string{"per_dev"},
+		"Authorization":          []string{"Bearer " + structValues.Token},
+	}
+	// perform a GET
+	inputfromcontrolm2, err := client.Do(getlogfromurl2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer inputfromcontrolm2.Body.Close()
+
+	logoutputfromcontrolm, err := ioutil.ReadAll(inputfromcontrolm2.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	color.Cyan("\n\n\nControlM Job State Output")
+	fmt.Printf("%s", logoutputfromcontrolm)
+
+	/*
+
+		log out of controlm
+
+	*/
 	logoutPost, err := http.NewRequest("POST", "https://$HOST:$PORT/automation-api/session/logout", nil)
 	if err != nil {
 		log.Fatal(err)
