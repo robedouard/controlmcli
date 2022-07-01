@@ -76,8 +76,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	color.Yellow("Getting ControlM log : ")
-
 	// set the url and jobname into a variable
 	url1 := "https://$HOST:$PORT/automation-api/run/jobs/status?jobname=" + os.Args[1]
 
@@ -183,7 +181,6 @@ func main() {
 		log.Fatal(err)
 	}
 	getlogfromurl2.Header = http.Header{
-
 		"Content-Type":           []string{"application/json"},
 		"Annotation-Subject":     []string{"per_dev"},
 		"Annotation-Description": []string{"per_dev"},
