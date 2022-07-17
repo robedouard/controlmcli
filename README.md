@@ -1,3 +1,3 @@
 # controlmcli
-query controlm batch jobs from the command line
+Query BMC Control-M batch jobs from the command line
 - replace $HOST $PORT $USERNAME $PASSWORD with your local environments values.
